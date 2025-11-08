@@ -3,7 +3,7 @@ shell: adb forward tcp:1234 localabstract:scrcpy
 shell: adb push /usr/local/share/scrcpy/scrcpy-server /data/local/tmp/scrcpy-server-manual.jar
 shell: adb shell CLASSPATH=/data/local/tmp/scrcpy-server-manual.jar app_process / com.genymobile.scrcpy.Server 3.3.3 tunnel_forward=true audio=false control=false cleanup=false  max_size=1920
 shell: gcc c_1z_h264_sdl.c  -lavcodec -lavformat -lavutil -lswscale -lSDL2
-shell: ./a.out 
+shell: ./a.out
 */
 // gcc c_1z_h264_sdl.c  -lavcodec -lavformat -lavutil -lswscale -lSDL2
 //  ./a.out
@@ -165,7 +165,7 @@ int decode_and_display_frame(const uint8_t *data, int size)
     {
         printf("%0x ", data[i]);
     }
-    printf("%#x\n",data[30+5]);
+    printf("%#x\n", data[30 + 5]);
     // 发送数据包到解码器
     ret = avcodec_send_packet(codec_ctx, &pkt);
     if (ret < 0)
@@ -321,32 +321,30 @@ int main(int argc, char *argv[])
     }
     p += isize;
 
+    int psize = 0;
+    /*
+        // 读取H264数据包
+        // ret = lseek(fd, 8, SEEK_CUR);      // pts long
+        ret = read_(fd, p, 8);
+        if (ret != 8)
+        {
+            printf("读8失败\n");
+            return -1;
+        }
+        buffer_size = read_(fd, &psize, 4); // size int
+        psize = ntohl(psize);
+        printf("size:%d\n", psize);
+        // 读取一帧数据（简化处理，实际应该按NALU单元读取）
+        buffer_size = read_(fd, p, psize);
+        if (buffer_size != psize)
+        {
+            printf("文件读取失败\n");
+            close(fd);
+            return -1;
+        }
+        p += psize;
 
-int psize = 0;
-/*
-    // 读取H264数据包
-    // ret = lseek(fd, 8, SEEK_CUR);      // pts long
-    ret = read_(fd, p, 8);
-    if (ret != 8)
-    {
-        printf("读8失败\n");
-        return -1;
-    }
-    buffer_size = read_(fd, &psize, 4); // size int
-    psize = ntohl(psize);
-    printf("size:%d\n", psize);
-    // 读取一帧数据（简化处理，实际应该按NALU单元读取）
-    buffer_size = read_(fd, p, psize);
-    if (buffer_size != psize)
-    {
-        printf("文件读取失败\n");
-        close(fd);
-        return -1;
-    }
-    p += psize;
-
-*/
-
+    */
 
     int size = 0;
 
@@ -354,10 +352,9 @@ int psize = 0;
     int quit = 0;
 
     // 解码并显示
-
+    int count = 0;
     printf("解码显示成功！\n");
     // 等待用户按键退出
-
     while (!quit)
     {
         // 读取H264数据包
@@ -379,9 +376,14 @@ int psize = 0;
             close(fd);
             return -1;
         }
-        zzsize += buffer_size + isize+psize;
-        if (decode_and_display_frame(buffer, zzsize) != 0)
-            break;
+        zzsize += buffer_size + isize + psize;
+        //if (count % 2 == 0)
+            if (decode_and_display_frame(buffer, zzsize) != 0)
+                break;
+        count++;
+        p -= isize;
+        isize = 0;
+
         zzsize = 0;
         while (SDL_PollEvent(&event))
         {
@@ -391,7 +393,7 @@ int psize = 0;
                 quit = 1;
             }
         }
-       // SDL_Delay(1000);
+        // SDL_Delay(1000);
     }
 
     close(fd);
@@ -399,17 +401,18 @@ int psize = 0;
     return 0;
 }
 
-int read_(int fd, void *p, int size){
-int y=size;
-int ret=0;
-while (y>0)
+int read_(int fd, void *p, int size)
 {
-    ret = read(fd, p, y);
-    if (ret < 0)
-    return ret;
-    y -= ret;
-    p += ret;
-    /* code */
-}
-return size;
+    int y = size;
+    int ret = 0;
+    while (y > 0)
+    {
+        ret = read(fd, p, y);
+        if (ret < 0)
+            return ret;
+        y -= ret;
+        p += ret;
+        /* code */
+    }
+    return size;
 }
