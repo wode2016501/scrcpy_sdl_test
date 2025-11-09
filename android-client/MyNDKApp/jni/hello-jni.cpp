@@ -129,6 +129,9 @@ int readyz(int fd, char *buf, int size_max) // 读取一帧数据
 {
 	int ret = 0;
 	int size = 0;
+	if(sizeof(long)==4)
+		ret = read_(fd, buf, sizeof(long long), size_max); // pts
+		else
 	ret = read_(fd, buf, sizeof(long), size_max); // pts
 	if (ret != 8)
 	{
