@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 				{
 					continue;
 				}
-				printf("client_arr[%d] = %d\n", i, client_arr[i]);
+				//printf("client_arr[%d] = %d\n", i, client_arr[i]);
 				if (FD_ISSET(client_arr[i], &wd_set))
 				{
 					//ret=str_length;
