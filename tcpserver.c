@@ -1,8 +1,11 @@
 /* 命令
-'/media/wode/c1194b4d-35c7-4bc2-b0d8-9ea36982e97f/home/wode/ndk/wode-ndk-28/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang' '/home/wode/src/0/tcpserver.c' -lcutils
- a.out
-	 ffmpeg  -re -i /sdcard/k1.ts  -g 1 -c:v h264 -f mpegts  http://127.0.0.1:8080
-	 ffmpeg -i
+shell: adb push /usr/local/share/scrcpy/scrcpy-server /data/local/tmp/scrcpy-server-manual.jar1
+shell:  adb shell CLASSPATH=/data/local/tmp/scrcpy-server-manual.jar1 app_process / com.genymobile.scrcpy.Server 3.3.3 tunnel_forward=true audio=false control=false cleanup=false video_bit_rate=20000000
+
+ shell: '/media/wode/c1194b4d-35c7-4bc2-b0d8-9ea36982e97f/home/wode/ndk/wode-ndk-28/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang' '/home/wode/src/0/tcpserver.c' -lcutils
+ shell: adb push a.out /data/local/tmp
+ shell: adb shell chmod 777 /data/local/tmp/a.out
+ shell: adb shell /data/local/tmp/a.out 9999 scrcpy
 */
 
 #include <stdio.h>
