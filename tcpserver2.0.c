@@ -2,7 +2,7 @@
 shell: adb push /usr/local/share/scrcpy/scrcpy-server /data/local/tmp/scrcpy-server-manual.jar1
 shell:  adb shell CLASSPATH=/data/local/tmp/scrcpy-server-manual.jar1 app_process / com.genymobile.scrcpy.Server 3.3.3 tunnel_forward=true audio=false control=false cleanup=false video_bit_rate=20000000
 
- shell: '/media/wode/c1194b4d-35c7-4bc2-b0d8-9ea36982e97f/home/wode/ndk/wode-ndk-28/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang' '/home/wode/src/0/tcpserver1.0.c' -lcutils
+ shell: '/media/wode/c1194b4d-35c7-4bc2-b0d8-9ea36982e97f/home/wode/ndk/wode-ndk-28/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang' '/home/wode/src/0/tcpserver2.0.c' -lcutils
  shell: adb push a.out /data/local/tmp
  shell: adb shell chmod 777 /data/local/tmp/a.out
  shell: adb shell /data/local/tmp/a.out 9999 scrcpy
@@ -15,7 +15,7 @@ shell:  adb shell CLASSPATH=/data/local/tmp/scrcpy-server-manual.jar1 app_proces
 #include <unistd.h>
 #include <stdlib.h> // exit()
 #include <sys/select.h>
-#define BUFFER_SIZE 1024 * 1024
+#define BUFFER_SIZE 1024 * 1024 * 2
 #include <signal.h>
 int socket_local_client(char *a, int b, int c);
 int read_yz(int fd, char *p, int size_max);
@@ -79,7 +79,8 @@ int main(int argc, char **argv)
     wodetime.tv_usec = 0;
     char tou[1024];
     int tousize = 0;
-    char *p =0;
+    char *p = 0;
+    int count = 0;
     // char *http200="HTTP/1.1 200 OK\r\nServer: nginx/1.27.0\r\nDate: Tue, 13
     // Aug 2024 14:58:33 GMT\r\nContent-Type:
     // video/x-flv\r\nTransfer-Encoding: chunked\r\nConnection:
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
                 close(fd);
                 fd = -1;
             }
-            
+
             client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_size);
             if (client_socket < 0)
             {
@@ -114,14 +115,14 @@ int main(int argc, char **argv)
                 return 0;
             }
             client_arr[0] = client_socket;
-            client_length ++;
+            client_length++;
 
             printf("打开文件: %s\n", argv[2]);
             fd = socket_local_client(argv[2], 0, 1);
             if (fd < 0)
             {
                 printf("打开文件失败: %s\n", argv[2]);
-                close(client_socket) ;   
+                close(client_socket);
                 close(server_socket);
                 return 0;
             }
@@ -208,13 +209,14 @@ int main(int argc, char **argv)
                     client_length--;
                 }
                 close(fd);
-                fd=-1;
+                fd = -1;
                 continue;
             }
             FD_ZERO(&wd_set);
             FD_ZERO(&rd_set);
             FD_SET(fd, &rd_set);
             FD_SET(server_socket, &rd_set);
+            count = 0;
             for (int i = 0; i < client_lengthmax; ++i)
             {
                 if (client_arr[i] == -1)
@@ -224,6 +226,9 @@ int main(int argc, char **argv)
                 FD_SET(client_arr[i], &wd_set);
                 if (client_arr[i] > maxfd)
                     maxfd = client_arr[i];
+                count++;
+                if (count == client_length)
+                    break;
             }
             ret = select(maxfd + 1, &rd_set, &wd_set, NULL, &wodetime);
             if (ret < 0)
@@ -239,7 +244,7 @@ int main(int argc, char **argv)
                 close(server_socket);
                 exit(1);
             }
-
+            count = 0;
             for (int i = 0; i < client_lengthmax; i++)
             {
                 if (client_arr[i] == -1)
@@ -254,12 +259,15 @@ int main(int argc, char **argv)
                     if (str_length != ret)                          // 读取数据完毕关闭套接字
                     {
                         // status = 0;
-                        printf("连接已经关闭: err:%d  %d  \n", str_length, client_arr[i]);
+                        printf("连接已经关闭: %d-1  %d  \n", client_length, client_arr[i]);
                         close(client_arr[i]);
                         client_arr[i] = -1;
                         client_length--;
                     }
                 }
+                count++;
+                if (count == client_length)
+                    break;
             }
         }
     }
