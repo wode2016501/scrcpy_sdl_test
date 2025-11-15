@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.Window;
 
 
 public class HelloJni extends Activity
@@ -33,22 +34,26 @@ public class HelloJni extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+		
 
         /* Create a TextView and set its content.
          * the text is retrieved by calling a native
          * function.
          */
+		//不显示程序的标题栏
+		requestWindowFeature( Window.FEATURE_NO_TITLE ); 
 		 if(surfaceView==null){
 			 Log.v(TAG, "创建surfaceView");
         surfaceView = new SurfaceView(this) ;//findViewById(R.id.surfaceView);
 		SurfaceHolder surfaceHolder = surfaceView.getHolder();
+		surface=surfaceHolder.getSurface(); 
 		// surfaceHolder.addCallback(surfaceHolderCallback);
 			 surfaceHolder.addCallback(new SurfaceHolder.Callback() {
 					 @Override
 					 public void surfaceCreated(SurfaceHolder holder) {
 
 						 Log.v(TAG, "surface created.");
-						 startPreview(holder.getSurface());
+						 startPreview(/*holder.getSurface()*/ surface);
 					 }
 
 					 @Override
@@ -60,7 +65,6 @@ public class HelloJni extends Activity
 						 Log.v(TAG, "=======format=" + format + " w/h : (" + width + ", " + height + ")");
 					 }
 				 });
-	  //  surface=surfaceHolder.getSurface(); 
         setContentView(surfaceView);
       //  startPreview(surface); 
 		}
@@ -93,10 +97,15 @@ public class HelloJni extends Activity
     static {
         System.loadLibrary("hello-jni");
     }
+	@Override
+	protected void onPause() {
+		//super.onPause();
+	}
 
 	@Override
 	protected void onDestroy() {
 		// stopPreview();
-		super.onDestroy();
+		//super.onDestroy();
 	}
+	
 }
