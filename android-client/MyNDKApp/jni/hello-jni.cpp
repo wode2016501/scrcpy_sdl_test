@@ -43,9 +43,12 @@ static ANativeWindow *theNativeWindow = 0;
 void *aaaaa(void *a);
 extern "C"
 {
+
+
+	int exit( int); 
 	int tcp_connect(char *ip, int port);
 	int readyz(int fd, char *buf, int size_max); // 读取一帧数据
-	//int ntohl(int ); 
+						     //int ntohl(int ); 
 	int read_(int fd, char *buf, size_t size, int max_size); 
 	char *malloc(int);
 	//int usleep(int);
@@ -60,48 +63,47 @@ JNIEXPORT void JNICALL Java_com_mycompany_myndkapp_HelloJni_startPreview(JNIEnv 
 		theNativeWindow = ANativeWindow_fromSurface(env, surface);
 		int ret = 0;
 		pthread_t pid;
-		void *a = 0;
 		LOGI("开启创建景程");
-		if ((ret = pthread_create(&pid, NULL, aaaaa, a)) != 0)
+		if ((ret = pthread_create(&pid, NULL, aaaaa, 0)) != 0)
 		{
-			// LOGD("thread_create err\n");
+			LOGI("thread_create err\n");
 		}
 	}
 }
 
 int tcp_connect(char *ip, int port)
 {
-    int client_socket;
-    struct sockaddr_in server_addr;
-    int ret;
+	int client_socket;
+	struct sockaddr_in server_addr;
+	int ret;
 
-    // 设置服务器地址和端口
+	// 设置服务器地址和端口
 
-    // 创建Socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_socket == -1)
-    {
-        LOGI("Socket创建失败");
-        return -1; 
-    }
-    LOGI("客户端Socket创建成功\n");
+	// 创建Socket
+	client_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (client_socket == -1)
+	{
+		LOGI("Socket创建失败");
+		return -1; 
+	}
+	LOGI("客户端Socket创建成功\n");
 
-    // 配置服务器地址信息
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = inet_addr(ip);
+	// 配置服务器地址信息
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+	server_addr.sin_addr.s_addr = inet_addr(ip);
 
-    // 连接到服务器
-    ret = connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
-    if (ret == -1)
-    {
-        LOGI("连接服务器失败");
-        close(client_socket);
-        return -1; 
-    }
-    LOGI("成功连接到服务器 %s:%d\n", ip, port);
-    return client_socket;
+	// 连接到服务器
+	ret = connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
+	if (ret == -1)
+	{
+		LOGI("连接服务器失败");
+		close(client_socket);
+		return -1; 
+	}
+	LOGI("成功连接到服务器 %s:%d\n", ip, port);
+	return client_socket;
 }
 
 int read_(int fd, char *buf, size_t size, int max_size)
@@ -131,49 +133,56 @@ int readyz(int fd, char *buf, int size_max) // 读取一帧数据
 	int size = 0;
 	if(sizeof(long)==4)
 		ret = read_(fd, buf, sizeof(long long), size_max); // pts
-		else
-	ret = read_(fd, buf, sizeof(long), size_max); // pts
+	else
+		ret = read_(fd, buf, sizeof(long), size_max); // pts
 	if (ret != 8)
 	{
-		LOGI("read size 8 \n");
+		LOGI("read size 8=%d 错误\n",sizeof(long));
 		return -1; /* EOF */
 	}
 	ret = read_(fd, (char *) &size, sizeof(int), size_max);
 	if (ret != 4)
 	{
-		LOGI("read size 4 failed:\n");
+		LOGI("read size 4 错误:\n");
 		return -1; /* EOF */
 	}
 	size = ntohl(size);
 	if (size > 0)
 	{
-		LOGI("size: %d %#x\n", size, size);
+		// LOGI("size: %d %#x\n", size, size);
 		ret = read_(fd, buf, size, size_max);
-		LOGI("n: %d\n", ret);
+		// LOGI("n: %d\n", ret);
 		if (ret == size)
 		{
 			return ret;
 		}
 	}
+	LOGI("read size %d 错误:\n",size);
 	return -1;
 }
+
+
+
+
 void *aaaaa(void *a)
 {
 	LOGI("开始打开文件");
-	int fd = tcp_connect("192.168.43.1",9999);//open("/sdcard/k.h264", 0);
+	int fd = tcp_connect("192.168.100.123",9999);//open("/sdcard/k.h264", 0);
 	if (fd < 0)
 	{
 		LOGI("无法打开文件");
 		return 0;
 	}
-	char *buff = malloc(1024*1024 );
-	LOGI("开文件成功%s", buff);
-	int rets = read_(fd, buff, 77, 1024);
+	char buff[77]; 
+	LOGI("开连接成功");
+	int rets = read_(fd, buff, 77, 77);
 	if(rets != 77)
 	{
 		LOGI("读取文件失败77");
 		return 0;
 	}
+
+
 	AMediaCodec *pMediaCodec;
 	AMediaFormat *format;
 	pMediaCodec = AMediaCodec_createDecoderByType("video/avc"); // h264
@@ -183,29 +192,85 @@ void *aaaaa(void *a)
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, 1080);
 	media_status_t status = AMediaCodec_configure(pMediaCodec, format, theNativeWindow, NULL, 0);
 	AMediaCodec_start(pMediaCodec);
-	int i = 0,zi=0;
+
+	size_t bufsize;
+
+	uint8_t *buf=0; 
+	int size =0; 
+	ssize_t bufidx; 
+	int cz = 0,rz=0;
+
+	int deng=-1; 
+	AMediaCodecBufferInfo info;
+	long presentationTimeUs = 0; // pts
+
+
+	int ii=0; 
+	/*
+	   int ret = 0;
+	   pthread_t pid;
+	   LOGI("开启编码进程");
+	   if ((ret = pthread_create(&pid, NULL, showsp, 0)) != 0)
+	   {
+	   LOGI("thread_create err\n");
+	   }
+	   */ 
+
+	/*
+
+	   bufidx = AMediaCodec_dequeueInputBuffer(pMediaCodec, deng ); //没有数据等待deng毫秒
+	   if (bufidx >= 0)
+	   {
+	   buf = AMediaCodec_getInputBuffer(pMediaCodec, bufidx, &bufsize);
+	   size = readyz(fd, (char *) buf, bufsize);
+	   if(size!=-1)
+	   {
+	//LOGI("读取第%d帧,size=%d", zi++, size);
+	presentationTimeUs = 0; // pts
+	AMediaCodec_queueInputBuffer(pMediaCodec, bufidx, 0, size, presentationTimeUs, 0);
+	}
+	}
+	*/ 
 	while (1)
 	{
-		usleep(1000);
-		ssize_t bufidx = AMediaCodec_dequeueInputBuffer(pMediaCodec, 2000);
+		ii++; 
+		// usleep(1000);
+		LOGI("相差%d帧,输入%d帧,输出%d帧 循环ii%d",rz-cz,rz,cz,ii);
+		// if(rz-cz>2)
+		//   deng=-1; 
+		bufidx = AMediaCodec_dequeueInputBuffer(pMediaCodec, deng ); //没有数据等待deng毫秒
 		if (bufidx >= 0)
 		{
-			size_t bufsize;
-			uint8_t *buf = AMediaCodec_getInputBuffer(pMediaCodec, bufidx, &bufsize);
-			int size = readyz(fd, (char *) buf, bufsize);
+			rz++; 
+			buf = AMediaCodec_getInputBuffer(pMediaCodec, bufidx, &bufsize);
+			size = readyz(fd, (char *) buf, bufsize);
 			if(size==-1)
 				break; 
-				//LOGI("读取第%d帧,size=%d", zi++, size);
-			long presentationTimeUs = 0; // pts
+			//LOGI("读取第%d帧,size=%d", zi++, size);
+			presentationTimeUs = 0; // pts
 			AMediaCodec_queueInputBuffer(pMediaCodec, bufidx, 0, size, presentationTimeUs, 0);
-			AMediaCodecBufferInfo info;
-			bufidx = AMediaCodec_dequeueOutputBuffer(pMediaCodec, &info, 2000);
-			if (bufidx >= 0)
-			{
-				//LOGI("发送第%d帧,size=%d", i++, size);
-				buf = AMediaCodec_getOutputBuffer(pMediaCodec, bufidx, &bufsize);
-				AMediaCodec_releaseOutputBuffer(pMediaCodec, bufidx, true);
-			}
 		}
+
+
+		while(1) {
+			bufidx = AMediaCodec_dequeueOutputBuffer(pMediaCodec, &info,0); //没有数据等待deng毫秒
+			if (bufidx < 0)
+				break; 
+			cz++; 
+			// LOGI("相差%d帧,输入%d帧,输出%d帧",rz-cz,rz,cz);
+			//buf = AMediaCodec_getOutputBuffer(pMediaCodec, bufidx, &bufsize);
+			AMediaCodec_releaseOutputBuffer(pMediaCodec, bufidx, true);
+		}
+		//showsp(pMediaCodec,info); 
+
+		//AMediaCodec_flush(pMediaCodec); 
+		// LOGI("相差%d帧,输入%d帧,输出%d帧",rz-cz,rz,cz);
+
+
 	}
+	AMediaCodec_stop(pMediaCodec);
+	AMediaCodec_delete(pMediaCodec);
+	AMediaFormat_delete(format);
+	close(fd);
+	exit(0); 
 }
