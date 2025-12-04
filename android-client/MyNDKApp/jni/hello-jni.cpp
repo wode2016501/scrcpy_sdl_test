@@ -44,7 +44,8 @@ void *aaaaa(void *a);
 extern "C"
 {
 
-
+int mainaudio(); 
+int tcp_connect(char *ip, int port); 
 	int exit( int); 
 	int tcp_connect(char *ip, int port);
 	int readyz(int fd, char *buf, int size_max); // 读取一帧数据
@@ -70,7 +71,7 @@ JNIEXPORT void JNICALL Java_com_mycompany_myndkapp_HelloJni_startPreview(JNIEnv 
 		}
 	}
 }
-
+/*
 int tcp_connect(char *ip, int port)
 {
 	int client_socket;
@@ -106,68 +107,13 @@ int tcp_connect(char *ip, int port)
 	return client_socket;
 }
 
-int read_(int fd, char *buf, size_t size, int max_size)
-{
 
-	if (size > max_size)
-		return -1;
-	int y = size;
-	int ret = 0;
-	while (y > 0)
-	{
-		ret = read(fd, buf, y);
-		if (ret < 1)
-		{
-			LOGI("read errno");
-			return -1;
-		}
-		buf += ret;
-		y -= ret;
-	}
-
-	return size;
-}
-int readyz(int fd, char *buf, int size_max) // 读取一帧数据
-{
-	int ret = 0;
-	int size = 0;
-	if(sizeof(long)==4)
-		ret = read_(fd, buf, sizeof(long long), size_max); // pts
-	else
-		ret = read_(fd, buf, sizeof(long), size_max); // pts
-	if (ret != 8)
-	{
-		LOGI("read size 8=%d 错误\n",sizeof(long));
-		return -1; /* EOF */
-	}
-	ret = read_(fd, (char *) &size, sizeof(int), size_max);
-	if (ret != 4)
-	{
-		LOGI("read size 4 错误:\n");
-		return -1; /* EOF */
-	}
-	size = ntohl(size);
-	if (size > 0)
-	{
-		// LOGI("size: %d %#x\n", size, size);
-		ret = read_(fd, buf, size, size_max);
-		// LOGI("n: %d\n", ret);
-		if (ret == size)
-		{
-			return ret;
-		}
-	}
-	LOGI("read size %d 错误:\n",size);
-	return -1;
-}
-
-
-
+*/ 
 
 void *aaaaa(void *a)
 {
 	LOGI("开始打开文件");
-	int fd = tcp_connect("192.168.100.123",9999);//open("/sdcard/k.h264", 0);
+	int fd = tcp_connect("192.168.216.125",9999);//open("/sdcard/k.h264", 0);
 	if (fd < 0)
 	{
 		LOGI("无法打开文件");
@@ -206,15 +152,17 @@ void *aaaaa(void *a)
 
 
 	int ii=0; 
+	
+	mainaudio(); 
 	/*
 	   int ret = 0;
 	   pthread_t pid;
-	   LOGI("开启编码进程");
-	   if ((ret = pthread_create(&pid, NULL, showsp, 0)) != 0)
+	   LOGI("开启音频进程");
+	   if ((ret = pthread_create(&audio, NULL, showsp, 0)) != 0)
 	   {
 	   LOGI("thread_create err\n");
 	   }
-	   */ 
+	   */
 
 	/*
 
@@ -233,9 +181,9 @@ void *aaaaa(void *a)
 	*/ 
 	while (1)
 	{
-		ii++; 
 		// usleep(1000);
 		LOGI("相差%d帧,输入%d帧,输出%d帧 循环ii%d",rz-cz,rz,cz,ii);
+		ii++; 
 		// if(rz-cz>2)
 		//   deng=-1; 
 		bufidx = AMediaCodec_dequeueInputBuffer(pMediaCodec, deng ); //没有数据等待deng毫秒

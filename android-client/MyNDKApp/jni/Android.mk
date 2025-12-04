@@ -18,10 +18,10 @@ include $(CLEAR_VARS)
 
 LOCAL_CPP_EXTENSION := .cpp .cc
 LOCAL_MODULE    := hello-jni
-LOCAL_SRC_FILES := hello-jni.cpp
+LOCAL_SRC_FILES := hello-jni.cpp k.c
 
 ifeq ($(TARGET_ARCH_ABI),x86)
     LOCAL_CFLAGS += -ffast-math -mtune=atom -mssse3 -mfpmath=sse
 endif
-LOCAL_LDLIBS += -landroid -llog  -lmediandk
+LOCAL_LDLIBS += -landroid -llog  -lmediandk -lm  -lOpenSLES
 include $(BUILD_SHARED_LIBRARY)
